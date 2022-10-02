@@ -12,7 +12,6 @@ namespace ADOEmployeePayRoll
     {
         public static string connectionString = @"Data Source=(localdb)\ProjectModels;Initial Catalog=EmployeePayRollServices;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         Employee emp = new Employee();
-
         public void GetEmployeeDetails()
         {
             SqlConnection sqlConnect = new SqlConnection(connectionString);
@@ -208,11 +207,9 @@ namespace ADOEmployeePayRoll
                     SqlCommand cmd = new SqlCommand("GetEmployeeInDateRange", sqlConnect);
 
                     cmd.CommandType = CommandType.StoredProcedure;
-
                     Console.WriteLine("\nEnter date range yyyy-mm-dd:");
                     Console.Write("Minimum date: "); DateTime date1 = DateTime.Parse(Console.ReadLine());
                     Console.Write("Maximum date: "); DateTime date2 = DateTime.Parse(Console.ReadLine());
-
                     cmd.Parameters.AddWithValue("@fromDate", date1);
                     cmd.Parameters.AddWithValue("@toDate", date2);
 
@@ -230,7 +227,6 @@ namespace ADOEmployeePayRoll
                             emp.TaxablePay = dr.GetDouble(6);
                             emp.IncomeTax = dr.GetDouble(7);
                             emp.NetPay = dr.GetDouble(8);
-
                             Console.Write(" {0}  {1}   {2}   {3}   {4}    {5}   {6}   {7}   {8}\n", emp.CompID, emp.CompanyName, emp.EmpId, emp.EmpName, emp.BasicPay, emp.Deductions, emp.TaxablePay, emp.IncomeTax, emp.NetPay);
                         }
                     }
@@ -240,7 +236,6 @@ namespace ADOEmployeePayRoll
 
                     if (affRows >= 1)
                     { Console.WriteLine(" Query Executed successfully."); }
-
                 }
             }
             catch (Exception ex)
@@ -250,7 +245,77 @@ namespace ADOEmployeePayRoll
                 sqlConnect.Close();
             }
         }
+        public void AddMultipleEmployees(List<Employee> employees)
+        {
+            DateTime start = DateTime.Now;
+
+            foreach (Employee employee in employees)
+                MultipleEmployees(employee);
+
+            DateTime end = DateTime.Now;
+            Console.WriteLine("With single main thread: " + (end - start).TotalMilliseconds);
+        }
+        public void AddMultipleEmployeesUsingThreads(List<Employee> employees)
+        {
+            DateTime start = DateTime.Now;
+
+            foreach (Employee employee in employees)
+            {
+                Task thread = new Task(() => MultipleEmployees(employee));
+                thread.Start();
+            }
+            DateTime end = DateTime.Now;
+            Console.WriteLine("With multi threading: " + (end - start).TotalMilliseconds);
+        }
+
+        public void MultipleEmployees(Employee emp)
+        {
+            SqlConnection sqlConnect = new SqlConnection(connectionString);
+            try
+            {
+                using (sqlConnect)
+                {
+                    sqlConnect.Open();
+                    SqlCommand cmd = new SqlCommand("AddEmployeeDetails", sqlConnect);
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    emp.TaxablePay = emp.BasicPay - emp.Deductions;
+                    emp.NetPay = emp.TaxablePay - emp.IncomeTax;
+
+                    cmd.Parameters.AddWithValue("@company", emp.CompanyName);
+                    cmd.Parameters.AddWithValue("@FullName", emp.EmpName);
+                    cmd.Parameters.AddWithValue("@gender", emp.Gender);
+                    cmd.Parameters.AddWithValue("@PhoneNumber", emp.PhoneNumber);
+                    cmd.Parameters.AddWithValue("@Address", emp.EmpAddress);
+                    cmd.Parameters.AddWithValue("@Date", emp.StartDate);
+                    cmd.Parameters.AddWithValue("@Department", emp.Department);
+                    cmd.Parameters.AddWithValue("@basicPay", emp.BasicPay);
+                    cmd.Parameters.AddWithValue("@Taxablepay", emp.TaxablePay);
+                    cmd.Parameters.AddWithValue("@deductions", emp.Deductions);
+                    cmd.Parameters.AddWithValue("@IncomeTax", emp.IncomeTax);
+                    cmd.Parameters.AddWithValue("@netPay", emp.NetPay);
+
+                    int affRows = cmd.ExecuteNonQuery();
+                    if (affRows >= 1)
+                    {
+                        Console.WriteLine("Employee added successfully.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Employee not added..");
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                sqlConnect.Close();
+            }
+        }
 
     }
-
 }

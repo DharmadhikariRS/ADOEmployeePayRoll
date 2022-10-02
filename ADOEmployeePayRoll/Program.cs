@@ -6,6 +6,14 @@
         {
             Console.WriteLine("Welcome to Payroll Service program using MSSQL & ADO.NET \n");
             EmployeeADO emp = new EmployeeADO();
+           
+            List<Employee> list = new List<Employee>() { new Employee { CompanyName = "SpaceX",EmpName = "Sachin Tendulkar",
+               Gender = "M",PhoneNumber=123456789,EmpAddress="fjksgf fjksf",StartDate=DateTime.Now,Department="Sales",
+               BasicPay=12345678,Deductions=1234,IncomeTax=5678},
+               new Employee { CompanyName = "Tesla",EmpName = "Elon Musk",
+               Gender = "M",PhoneNumber=912345678,EmpAddress="street texas",StartDate=DateTime.Now,Department="Marketing",
+               BasicPay=999999,Deductions=7873,IncomeTax=5678} };
+
             OptionsDisplay();
 
             void OptionsDisplay()
@@ -36,7 +44,10 @@
                         emp.GetRowsByDateRange();
                         OptionsDisplay();
                         break;
-
+                    case 6:
+                        emp.AddMultipleEmployees(list);
+                        emp.AddMultipleEmployeesUsingThreads(list);
+                        break;
                     default:
                         Console.WriteLine("Enter correct option");
                         break;
